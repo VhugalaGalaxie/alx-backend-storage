@@ -70,40 +70,40 @@ def replay(func: Callable):
         print(fin)
 
 
-class Cache():
-    """
-    Store instance of Redis client as private variable _redis
-    Flush the instance using flushdb
-    """
-    def __init__(self):
-        """
-        Prototype: def __init__(self):
-        Store instance of Redis client as private variable _redis
-        """
+class Cache:
+    '''Represents an object for storing data in a Redis data storage.
+    '''
+    def __init__(self) -> None:
+        '''Initializes a Cache instance.
+        '''
         self._redis = redis.Redis()
-        self._redis.flushdb()
+        self._redis.flushdb(True)
 
     @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
-        """
-        Store history of inputs and outputs for a particular function
-        """
-        gen = str(uuid.uuid4())
-        self._redis.set(gen, data)
-        return gen
+        '''Stores a value in a Redis data storage and returns the key.
+        '''
+        data_key = str(uuid.uuid4())
+        self._redis.set(data_key, data)
+        return data_key
 
-    def get(self, key: str,
-            fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:
-        """
-        Convert data back to desired format
-        """
-        value = self._redis.get(key)
-        return value if not fn else fn(value)
+    def get(
+            self,
+            key: str,
+            fn: Callable = None,
+            ) -> Union[str, bytes, int, float]:
+        '''Retrieves a value from a Redis data storage.
+        '''
+        data = self._redis.get(key)
+        return fn(data) if fn is not None else data
 
-    def get_int(self, key):
-        return self.get(key, int)
+    def get_str(self, key: str) -> str:
+        '''Retrieves a string value from a Redis data storage.
+        '''
+        return self.get(key, lambda x: x.decode('utf-8'))
 
-    def get_str(self, key):
-        value = self._redis.get(key)
-        return value.decode("utf-8")
+    def get_int(self, key: str) -> int:
+        '''Retrieves an integer value from a Redis data storage.
+        '''
+        return self.get(key, lambda x: int(x))
