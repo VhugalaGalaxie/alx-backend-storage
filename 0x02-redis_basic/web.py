@@ -19,12 +19,16 @@ def data_cacher(method: Callable) -> Callable:
     def invoker(url) -> str:
         '''The wrapper function for caching the output.
         '''
+        # Increment the URL access count
         redis_store.incr(f'count:{url}')
+        
+        # Check if the result is already cached
         result = redis_store.get(f'result:{url}')
         if result:
             return result.decode('utf-8')
+        
+        # If not cached, fetch the content and cache it
         result = method(url)
-        redis_store.set(f'count:{url}', 0)
         redis_store.setex(f'result:{url}', 10, result)
         return result
     return invoker
